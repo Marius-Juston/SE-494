@@ -2,16 +2,12 @@ import pyodbc
 
 
 class SQLConnection:
-    def __init__(self):
+    def __init__(self, server_name):
         DRIVER_NAME = 'SQL Server Native Client 11.0'
-        SERVER_NAME = 'MARIUS-LAPTOP\SQLEXPRESS'  # Retrieved using SELECT @@SERVERNAME query
-
-        DATABASE_NAME = '70_UI'
 
         print(pyodbc.drivers())
         cnxn_str = (f"Driver={DRIVER_NAME};"
-                    f"Server={SERVER_NAME};"
-                    f"Database={DATABASE_NAME};"
+                    f"Server={server_name};"
                     "Trusted_Connection=yes;")
         cnxn: pyodbc.Connection = pyodbc.connect(cnxn_str)
 
@@ -32,4 +28,6 @@ class SQLConnection:
 
 
 if __name__ == '__main__':
-    sql = SQLConnection()
+    SERVER_NAME = 'MARIUS-LAPTOP\SQLEXPRESS'  # Retrieved using SELECT @@SERVERNAME query
+
+    sql = SQLConnection(SERVER_NAME)
