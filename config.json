@@ -1,4 +1,9 @@
 {
-  "SQL_SERVER_NAME" : "MARIUS-LAPTOP\\SQLEXPRESS",
-  "LOG_DIRECTORY": ".\\logs\\"
+  "SQL_SERVER_NAME": "MARIUS-LAPTOP\\SQLEXPRESS",
+  "LOG_DIRECTORY": ".\\logs\\",
+  "PRODUCT_TOL": {
+    "800": 0.03,
+    "810": 0.03,
+    "default": 0.07
+  }
 }
