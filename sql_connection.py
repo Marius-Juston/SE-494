@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from pprint import pprint
 
 import pyodbc
 
@@ -118,6 +119,58 @@ class SQLConnection:
         self.query(query)
         self.cursor.commit()
 
+    def collect_previous_data(self, order_number):
+
+        output = {}
+
+        for d in ["Diameter", "Aplitude", "Frequency"]:
+
+            if d == "Aplitude":
+                nom = 'b.amp'
+            elif d == "Frequency":
+                nom = 'b.freq'
+            else:
+                nom = "b.diameter"
+
+            query = f"""
+            SELECT TOP 100 d.Date, d.[Sample Number], {nom}, d.AVG, d.USL, d.LSL
+                    FROM [70_UI].dbo.sfordfil_sql a left outer join [CFF_UI].dbo.fiber_specs b ON a.item_no = b.item_no 
+                        inner join [70_UI].dbo.imitmidx_sql c on a.item_no = c.item_no
+                        left join [QA_UI].dbo.{d} d on d.[Shop Floor Order Number] = a.ord_no
+                        where a.ord_no = {order_number}            
+                        order by d.Date desc, d.[Sample Number] desc"""
+
+            self.query(query)
+
+            outs = self.cursor.fetchall()
+
+            if outs is not None and len(outs) > 0:
+
+                nom = float(outs[0][2])
+                uls = float(outs[0][4])
+                lls = float(outs[0][5])
+
+                x = []
+                y = []
+
+                for out in outs:
+                    x.append(out[0])
+                    y.append(float(out[3]))
+
+                data = {
+                    "ULS": uls,
+                    "LSL": lls,
+                    "NOM": nom,
+                    "dates": x,
+                    "avgs": y
+                }
+
+                output[d] = data
+
+                logging.debug("Saving to database output " + str(data))
+
+        return output
+
     def insert_data(self, order_number: int, line_number: int, operator: str, diameters: list[float],
                     amplitudes: list[float], frequencies: list[float]):
         orders = self.get_filament_specs(order_number)
@@ -200,4 +253,5 @@ if __name__ == '__main__':
     config = Config()
 
     sql = SQLConnection(config)
-    sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
+    # sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
+    pprint(sql.collect_previous_data(282353))
