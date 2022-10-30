@@ -1,5 +1,6 @@
 # Importing Libraries 
 from tkinter import *
+from tkinter import messagebox
 
 import customtkinter
 
@@ -26,9 +27,12 @@ class main_window:
         sfonLabel = customtkinter.CTkLabel(self.master, text="Enter shop floor order number: ")
         sfonLabel.grid(column=0, row=2, pady=10, padx = 5)
 
-        # adding Entry Field
+        # adding Entry Field with event callback
+        sv = StringVar()
+        sv.trace("w", self.callback(sv))
         sfonReg = self.master.register(self.sfonValidation)
         sfonText = EntryWithPlaceholder(self.master, "Enter a 8-digit number!")
+        sfonText.bind('<Return>', (lambda _: self.callback(sfonText)))
         sfonText.grid(column=1, row=2, pady=10)
 
         # adding Entry validation
@@ -76,6 +80,11 @@ class main_window:
         # Set Button Grid
         vizButton.grid(column=1, row=8, pady=25)
     
+    def callback(self, sfonText):
+        if sfonText.get().isdigit() and len(sfonText.get()) == 8:
+            print(sfonText.get())
+            #SQLConnection.collect_previous_data(sfonText.get())
+            
     # function to validate that sfon is a 8 digit number
     def sfonValidation(self, sfonInput):
         if sfonInput.isdigit() and len(sfonInput) <= 8:
@@ -103,6 +112,8 @@ class main_window:
                         #[i for i in range(22)],
                         #[i for i in range(22)],
                         #[i for i in range(22)])
+    
+                        
 
 class EntryWithPlaceholder(Entry):
     def __init__(self, master=None, placeholder="PLACEHOLDER", color='grey'):
