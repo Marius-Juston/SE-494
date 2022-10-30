@@ -16,7 +16,7 @@ from sql_connection import SQLConnection
 class MainWindow:
     def __init__(self, master):
         self.config = Config()
-        
+
         self.master = master
         inputLabel = customtkinter.CTkLabel(self.master, text="Input information", text_font=(None, 18),
                                             text_color="#4f95c0")
