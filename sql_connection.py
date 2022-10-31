@@ -1,6 +1,6 @@
+import json
 import logging
 from datetime import datetime
-from pprint import pprint
 
 import pyodbc
 
@@ -121,6 +121,9 @@ class SQLConnection:
 
     def collect_previous_data(self, order_number):
 
+        if isinstance(order_number, str):
+            order_number = int(order_number)
+
         output = {}
 
         for d in ["Diameter", "Aplitude", "Frequency"]:
@@ -154,7 +157,8 @@ class SQLConnection:
                 y = []
 
                 for out in outs:
-                    x.append(out[0])
+                    date: datetime = out[0]
+                    x.append(date.isoformat())
                     y.append(float(out[3]))
 
                 data = {
@@ -254,4 +258,8 @@ if __name__ == '__main__':
 
     sql = SQLConnection(config)
     # sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
-    pprint(sql.collect_previous_data(282353))
+
+    data = sql.collect_previous_data(282353)
+
+    with open("example_data.json", "w") as f:
+        json.dump(data, f)

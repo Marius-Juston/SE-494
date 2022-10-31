@@ -25,7 +25,8 @@ class Config:
 
         print("Saving logs to:", full_path)
 
-        logging.basicConfig(filename=full_path, format='%(asctime)s:%(levelname)s:%(funcName)s:%(lineno)d:%(message)s', level=logging.DEBUG)
+        logging.basicConfig(filename=full_path, format='%(asctime)s:%(levelname)s:%(funcName)s:%(lineno)d:%(message)s',
+                            level=logging.DEBUG)
 
 
 if __name__ == '__main__':
