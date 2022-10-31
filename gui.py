@@ -51,7 +51,7 @@ class main_window:
         lineNumText.config(validate="key", validatecommand=(lineNumReg, '%P'))
 
         # button widget 
-        saveButton = customtkinter.CTkButton(self.master, text="Save Information", command=self.clicked(sfonText.get(), lineNumText.get(), opNameText.get()))
+        saveButton = customtkinter.CTkButton(self.master, text="Save Information", command=self.clicked())
         # Set Button Grid
         saveButton.grid(column=0, row=4, pady=15)
 
@@ -129,7 +129,8 @@ class main_window:
     # function to display user text when
     # button is clicked
     def clicked(self, sfonText,lineNumText, opNameText):
-        config = Config()
+        print(sfonText)
+        #config = Config()
         #sql = SQLConnection(config)
         #sql.insert_data(int(sfonText), int(lineNumText), opNameText,
                         #[i for i in range(22)],
