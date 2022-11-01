@@ -2,7 +2,7 @@
 import json
 import os
 from tkinter import *
-
+from tkinter import messagebox
 import customtkinter
 
 from configuration import Config
@@ -36,12 +36,16 @@ class MainWindow:
         # adding Entry Field with event callback
         sfonReg = self.master.register(self.sfonValidation)
         self.sfonText = EntryWithPlaceholder(self.master, "Enter a 8-digit number!")
-
-        self.sfonText.bind('<Return>', (lambda _: self.sf_callback(self.sfonText)))
         self.sfonText.grid(column=1, row=2, pady=10)
 
         # adding Entry validation
         self.sfonText.config(validate="key", validatecommand=(sfonReg, '%P'))
+        # Set Button
+        sfonButton = customtkinter.CTkButton(self.master, text="Load data",
+                                             command=self.sfonClicked)
+        # Set Button Grid
+        sfonButton.grid(column=2, row=2, pady=10)
+
 
         lineNumLabel = customtkinter.CTkLabel(self.master, text="Enter line number: ")
         lineNumLabel.grid(column=0, row=3, pady=10)
@@ -87,33 +91,7 @@ class MainWindow:
         # Set Button Grid
         vizButton.grid(column=1, row=8, pady=25)
 
-        self.sql = SQLConnection(self.config)
-
-    def op_callback(self, opNameText):
-        print(opNameText.get())
-        fname = "operators.json"
-        op_list = []
-        if os.path.exists(fname):
-            with open(fname) as f:
-                load_data = json.load(f)
-                op_list = load_data["operator_names"]
-                op_list.append(opNameText.get())
-                load_data["last_operator"] = opNameText.get()
-                load_data["operator_names"] = op_list
-        else:
-            op_list.append(opNameText.get())
-            load_data = {
-                "last_operator": opNameText.get(),
-                "operator_names": op_list,
-            }
-
-        with open(fname, "w") as f:
-            json.dump(load_data, f)
-
-    def sf_callback(self, sfonText):
-        if sfonText.get().isdigit() and len(sfonText.get()) == 8:
-            print(sfonText.get())
-            self.sql.collect_previous_data(sfonText.get())
+        #self.sql = SQLConnection(self.config)
 
     # function to validate that sfon is a 8 digit number
     def sfonValidation(self, sfonInput):
@@ -132,6 +110,18 @@ class MainWindow:
             return True
         else:
             return False
+        
+    def sfonClicked(self):
+        sfonText = self.sfonText.get()
+        if sfonText.isdigit() and len(sfonText) == 8:
+            print(sfonText.get())
+            #self.sql.collect_previous_data(sfonText.get())
+        else:
+            print("error")
+            self.popup("Invalid shop floor order number")
+
+    def popup(self, msg=""):
+        messagebox.showerror(title=None, message=msg)
 
     # function to display user text when
     # button is clicked
@@ -139,6 +129,25 @@ class MainWindow:
         sfonText = self.sfonText.get()
         lineNumText = self.lineNumText.get(),
         opNameText = self.opNameText.get()
+
+        fname = "operators.json"
+        op_list = []
+        if os.path.exists(fname):
+            with open(fname) as f:
+                load_data = json.load(f)
+                op_list = load_data["operator_names"]
+                op_list.append(opNameText)
+                load_data["last_operator"] = opNameText
+                load_data["operator_names"] = op_list
+        else:
+            op_list.append(opNameText)
+            load_data = {
+                "last_operator": opNameText,
+                "operator_names": op_list,
+            }
+
+        with open(fname, "w") as f:
+            json.dump(load_data, f)
 
         print(int(sfonText), int(lineNumText), opNameText)
         # self.sql.insert_data(int(sfonText), int(lineNumText), opNameText,
