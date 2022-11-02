@@ -13,7 +13,8 @@ class SensorConnection:
         self.buffer_size = config.BUFFER_SIZE
 
         self.sock = socket.socket(socket.AF_INET,  # Internet
-                                  socket.SOCK_DGRAM)  # UDP
+                                  # socket.SOCK_DGRAM)  # UDP
+                                  socket.SOCK_STREAM)  # UDP
 
         logging.info(f"Connecting to '{config.SENSOR_IP}':{config.SENSOR_PORT} with buffer size: {self.buffer_size}")
         self.sock.bind((config.SENSOR_IP, config.SENSOR_PORT))

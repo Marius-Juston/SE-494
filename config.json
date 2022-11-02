@@ -6,7 +6,7 @@
     "810": 0.03,
     "default": 0.07
   },
-  "SENSOR_IP": "198.168.0.20",
-  "SENSOR_PORT": 68,
+  "SENSOR_IP": "169.254.135.10",
+  "SENSOR_PORT": 8600,
   "BUFFER_SIZE": 496
 }
