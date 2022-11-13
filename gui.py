@@ -1,10 +1,12 @@
 # Importing Libraries 
 import json
+import matplotlib.pyplot as plt
+import pandas as pd 
 import os
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
 import customtkinter
-
 from configuration import Config
 from sql_connection import SQLConnection
 
@@ -87,11 +89,16 @@ class MainWindow:
         ampTextbox.grid(row=7, column=2)
 
         # button widget 
-        vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200)
+        vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200, command=self.command)
         # Set Button Grid
         vizButton.grid(column=1, row=8, pady=25)
-
         #self.sql = SQLConnection(self.config)
+    
+    def command(self):
+        self.top = Toplevel(width=600, height=600)
+        self.top.title("Data Visualization")
+        tabControl = ttk.Notebook(self.top)
+       
 
     # function to validate that sfon is a 8 digit number
     def sfonValidation(self, sfonInput):
@@ -156,6 +163,7 @@ class MainWindow:
         # [i for i in range(22)])
 
 
+
 class EntryWithPlaceholder(Entry):
     def __init__(self, master=None, placeholder="PLACEHOLDER", color='grey'):
         super().__init__(master)
@@ -195,3 +203,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
