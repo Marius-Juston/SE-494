@@ -88,8 +88,7 @@ class MainWindow:
         sample_data = list(range(1,11))
         diameterTextbox = customtkinter.CTkTextbox(self.master)
         diameterTextbox.grid(row=7, column=0, padx=15)
-        self.spec_color(sample_data,diameterTextbox)
-
+        self.test_spec_color(sample_data,diameterTextbox)
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
 
@@ -108,18 +107,23 @@ class MainWindow:
         vizButton.grid(column=1, row=8, pady=25)
         #self.sql = SQLConnection(self.config)
 
-    def spec_color(self,list,textbox):
+    def spec_color(self,list,textbox, USL, LSL):
         textbox.tag_config("red", foreground="red")
-        textbox.tag_config("white", foreground="white")
+        textbox.tag_config("green", foreground="green")
         for i in list:
-            if i%2 == 0:
-                textbox.insert(END, str(i) + '\n', "white")
+            if LSL<=i<=USL:
+                textbox.insert(END, str(i) + '\n', "green")
             else:
                 textbox.insert(END, str(i) + '\n', "red")
 
-    def add_newLine(self,list):
-        new_list = '\n'.join([str(i) for i in list])
-        return (new_list)
+    def test_spec_color(self,list,textbox):
+        textbox.tag_config("red", foreground="red")
+        textbox.tag_config("green", foreground="green")
+        for i in list:
+            if i%2 == 0:
+                textbox.insert(END, str(i) + '\n', "green")
+            else:
+                textbox.insert(END, str(i) + '\n', "red")
 
     def command(self):
         self.app = Graph(self.master)
