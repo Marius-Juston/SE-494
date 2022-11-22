@@ -29,11 +29,20 @@ class MainWindow:
 
         opNameLabel = customtkinter.CTkLabel(self.master, text="Enter operator name: ")
         opNameLabel.grid(column=0, row=1, pady=10)
-
+        
+        #get existing operators
+        with open('operators.json', 'r') as f:
+            self.op_data = json.load(f)
         # adding Entry Field
-        self.opNameText = EntryWithPlaceholder(self.master, "Enter your name!")
-        self.opNameText.grid(column=1, row=1, pady=10)
-        self.opNameText.bind('<Return>', (lambda _: self.op_callback(self.opNameText)))
+        self.opNameCombo = customtkinter.CTkComboBox(master=self.master,
+                                     values=self.op_data['operator_names'], 
+                                     width = 195, fg_color="#1e1e1e", border_color = "#323232", text_color="white")
+        self.opNameCombo.set(self.op_data['last_operator'])
+        self.opNameCombo.grid(column=1, row=1, pady=10)
+
+        #old entry for operator name
+        #self.opNameText = EntryWithPlaceholder(self.master, "Enter your name!")
+        #self.opNameText.bind('<Return>', (lambda _: self.op_callback(self.opNameText)))
 
         sfonLabel = customtkinter.CTkLabel(self.master, text="Enter shop floor order number: ")
         sfonLabel.grid(column=0, row=2, pady=10, padx=5)
@@ -76,8 +85,10 @@ class MainWindow:
         diameterLabel = customtkinter.CTkLabel(self.master, text="Diameter")
         diameterLabel.grid(column=0, row=6, pady=10)
 
+        sample_data = list(range(1,11))
         diameterTextbox = customtkinter.CTkTextbox(self.master)
         diameterTextbox.grid(row=7, column=0, padx=15)
+        self.spec_color(sample_data,diameterTextbox)
 
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
@@ -96,6 +107,19 @@ class MainWindow:
         # Set Button Grid
         vizButton.grid(column=1, row=8, pady=25)
         #self.sql = SQLConnection(self.config)
+
+    def spec_color(self,list,textbox):
+        textbox.tag_config("red", foreground="red")
+        textbox.tag_config("white", foreground="white")
+        for i in list:
+            if i%2 == 0:
+                textbox.insert(END, str(i) + '\n', "white")
+            else:
+                textbox.insert(END, str(i) + '\n', "red")
+
+    def add_newLine(self,list):
+        new_list = '\n'.join([str(i) for i in list])
+        return (new_list)
 
     def command(self):
         self.app = Graph(self.master)
@@ -136,7 +160,7 @@ class MainWindow:
     def clicked(self):
         sfonText = self.sfonText.get()
         lineNumText = self.lineNumText.get(),
-        opNameText = self.opNameText.get()
+        opNameText = self.opNameCombo.get()
 
         fname = "operators.json"
         op_list = []
