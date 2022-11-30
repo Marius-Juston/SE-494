@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd  
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+from udp import SensorConnection
 # Save the operators that have been used before
 # Last user when opening up the application again is automatically set
 # Dropdown option for the operators
@@ -21,6 +21,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 class MainWindow:
     def __init__(self, master):
         self.config = Config()
+        self.sensorConfig = SensorConnection(self.config, self.data_callbak)
 
         self.master = master
         inputLabel = customtkinter.CTkLabel(self.master, text="Input information", text_font=(None, 18),
@@ -88,7 +89,7 @@ class MainWindow:
         sample_data = list(range(1,11))
         diameterTextbox = customtkinter.CTkTextbox(self.master)
         diameterTextbox.grid(row=7, column=0, padx=15)
-        self.test_spec_color(sample_data,diameterTextbox)
+
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
 
@@ -107,7 +108,12 @@ class MainWindow:
         vizButton.grid(column=1, row=8, pady=25)
         #self.sql = SQLConnection(self.config)
 
+
+        #USL, LSL, Mean, std. dev, quartiles
     def spec_color(self,list,textbox, USL, LSL):
+        #add clear textbox
+        textbox.delete("1.0","end")
+        
         textbox.tag_config("red", foreground="red")
         textbox.tag_config("green", foreground="green")
         for i in list:
@@ -191,6 +197,14 @@ class MainWindow:
         # [i for i in range(22)],
         # [i for i in range(22)])
 
+    def data_callbak(self,data):
+        x = list(map(float, data.split(",")))
+        diameter = x[:len(x)//3]
+        freq = x[len(x)//3:len(x)//3*2]
+        amp = x[len(x)//3*2:]
+        self.spec_color(diameter, self.diameterTextbox)
+        self.spec_color(freq, self.frequncyTextbox)
+        self.spec_color(amp, self.ampTextbox)
 
 
 class EntryWithPlaceholder(Entry):
