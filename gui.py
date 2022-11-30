@@ -89,7 +89,7 @@ class MainWindow:
         sample_data = list(range(1,11))
         diameterTextbox = customtkinter.CTkTextbox(self.master)
         diameterTextbox.grid(row=7, column=0, padx=15)
-        
+
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
 
@@ -112,6 +112,8 @@ class MainWindow:
         #USL, LSL, Mean, std. dev, quartiles
     def spec_color(self,list,textbox, USL, LSL):
         #add clear textbox
+        textbox.delete("1.0","end")
+        
         textbox.tag_config("red", foreground="red")
         textbox.tag_config("green", foreground="green")
         for i in list:
