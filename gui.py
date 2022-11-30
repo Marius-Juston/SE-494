@@ -21,8 +21,7 @@ from udp import SensorConnection
 class MainWindow:
     def __init__(self, master):
         self.config = Config()
-        self.sensorConfig = SensorConnection(self.config, self.data_callbak)
-
+    
         self.master = master
         inputLabel = customtkinter.CTkLabel(self.master, text="Input information", text_font=(None, 18),
                                             text_color="#4f95c0")
@@ -87,20 +86,20 @@ class MainWindow:
         diameterLabel.grid(column=0, row=6, pady=10)
 
         sample_data = list(range(1,11))
-        diameterTextbox = customtkinter.CTkTextbox(self.master)
-        diameterTextbox.grid(row=7, column=0, padx=15)
-
+        self.diameterTextbox = customtkinter.CTkTextbox(self.master)
+        self.diameterTextbox.grid(row=7, column=0, padx=15)
+        
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
 
-        frequncyTextbox = customtkinter.CTkTextbox(self.master)
-        frequncyTextbox.grid(row=7, column=1)
+        self.frequncyTextbox = customtkinter.CTkTextbox(self.master)
+        self.frequncyTextbox.grid(row=7, column=1)
 
         ampLabel = customtkinter.CTkLabel(self.master, text="Amplitude")
         ampLabel.grid(column=2, row=6, pady=10)
 
-        ampTextbox = customtkinter.CTkTextbox(self.master)
-        ampTextbox.grid(row=7, column=2)
+        self.ampTextbox = customtkinter.CTkTextbox(self.master)
+        self.ampTextbox.grid(row=7, column=2)
 
         # button widget 
         vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200, command=self.command)
@@ -108,19 +107,20 @@ class MainWindow:
         vizButton.grid(column=1, row=8, pady=25)
         #self.sql = SQLConnection(self.config)
 
+        self.sensorConfig = SensorConnection(self.config, self.data_callbak)
 
         #USL, LSL, Mean, std. dev, quartiles
-    def spec_color(self,list,textbox, USL, LSL):
+    def spec_color(self,list,input_textbox, USL, LSL):
         #add clear textbox
-        textbox.delete("1.0","end")
-        
-        textbox.tag_config("red", foreground="red")
-        textbox.tag_config("green", foreground="green")
+        input_textbox.textbox.delete("1.0","end")
+
+        input_textbox.tag_config("red", foreground="red")
+        input_textbox.tag_config("green", foreground="green")
         for i in list:
             if LSL<=i<=USL:
-                textbox.insert(END, str(i) + '\n', "green")
+                input_textbox.insert(END, str(i) + '\n', "green")
             else:
-                textbox.insert(END, str(i) + '\n', "red")
+                input_textbox.insert(END, str(i) + '\n', "red")
 
     def test_spec_color(self,list,textbox):
         textbox.tag_config("red", foreground="red")
@@ -202,9 +202,9 @@ class MainWindow:
         diameter = x[:len(x)//3]
         freq = x[len(x)//3:len(x)//3*2]
         amp = x[len(x)//3*2:]
-        self.spec_color(diameter, self.diameterTextbox)
-        self.spec_color(freq, self.frequncyTextbox)
-        self.spec_color(amp, self.ampTextbox)
+        self.spec_color(diameter, self.diameterTextbox, 0.5, 0.3)
+        self.spec_color(freq, self.frequncyTextbox, 0.5, 0.3)
+        self.spec_color(amp, self.ampTextbox, 0.5, 0.3)
 
 
 class EntryWithPlaceholder(Entry):
