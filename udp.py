@@ -17,7 +17,7 @@ class SensorConnection:
                                   socket.SOCK_STREAM)  # UDP
 
         logging.info(f"Connecting to '{config.SENSOR_IP}':{config.SENSOR_PORT} with buffer size: {self.buffer_size}")
-        self.sock.bind((config.SENSOR_IP, config.SENSOR_PORT))
+        self.sock.connect((config.SENSOR_IP, config.SENSOR_PORT))
 
         self.stop = False
         self.t = threading.Thread(target=self.handle, daemon=True)
@@ -31,8 +31,7 @@ class SensorConnection:
 
     def handle(self):
         while not self.stop:
-            data, addr = self.sock.recvfrom(self.buffer_size)  # buffer size is 1024 bytes
-
+            data = self.sock.recv(self.buffer_size)  # buffer size is 1024 bytes
             self.callback(data)
 
 

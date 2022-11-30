@@ -2,11 +2,15 @@ import socket
 
 import numpy as np
 
-localIP = "127.0.0.1"
+from configuration import Config
 
-localPort = 20000
+config = Config()
 
-bufferSize = 1024
+localIP = config.SENSOR_IP
+
+localPort = config.SENSOR_PORT
+
+bufferSize = config.BUFFER_SIZE
 
 # Create a datagram socket
 
@@ -15,6 +19,8 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
 # Bind to address and ip
 
 UDPServerSocket.bind((localIP, localPort))
+UDPServerSocket.listen()
+conn, addr = UDPServerSocket.accept()
 
 print("UDP server up and listening")
 
@@ -23,24 +29,26 @@ print("UDP server up and listening")
 num_datapoints = 10
 num_columns = 3
 
-while (True):
-    # bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
-    #
-    # message = bytesAddressPair[0]
-    #
-    # address = bytesAddressPair[1]
-    #
-    # clientMsg = "Message from Client:{}".format(message)
-    # clientIP = "Client IP Address:{}".format(address)
-    #
-    # print(clientMsg)
-    # print(clientIP)
+with conn:
+    while (True):
+        # bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+        #
+        # message = bytesAddressPair[0]
+        #
+        # address = bytesAddressPair[1]
+        #
+        # clientMsg = "Message from Client:{}".format(message)
+        # clientIP = "Client IP Address:{}".format(address)
+        #
+        # print(clientMsg)
+        # print(clientIP)
 
-    # Sending a reply to client
+        # Sending a reply to client
 
-    msgFromServer = ",".join(map(str, np.random.random(num_columns * num_datapoints)))
+        msgFromServer = ",".join(map(str, np.random.random(num_columns * num_datapoints)))
 
-    bytesToSend = str.encode(msgFromServer)
-    print(bytesToSend)
+        bytesToSend = str.encode(msgFromServer)
+        print(bytesToSend)
 
-    UDPServerSocket.sendto(bytesToSend, ("127.0.0.1", localPort + 1))
+        # UDPServerSocket.sendto(bytesToSend, (localIP, localPort))
+        conn.sendall(bytesToSend)
