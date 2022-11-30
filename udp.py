@@ -32,7 +32,7 @@ class SensorConnection:
     def handle(self):
         while not self.stop:
             data = self.sock.recv(self.buffer_size)  # buffer size is 1024 bytes
-            data = data.decode()
+            data = data.decode().strip()
             self.callback(data)
 
 

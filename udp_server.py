@@ -45,9 +45,9 @@ with conn:
 
         # Sending a reply to client
 
-        msgFromServer = ",".join(map(str, np.random.random(num_columns * num_datapoints)))
+        msgFromServer = ",".join(map(str, np.round(np.random.random(num_columns * num_datapoints), 2)))
 
-        bytesToSend = str.encode(msgFromServer)
+        bytesToSend = str.encode(msgFromServer + " " * (config.BUFFER_SIZE - len(msgFromServer)))
         print(bytesToSend)
 
         # UDPServerSocket.sendto(bytesToSend, (localIP, localPort))
