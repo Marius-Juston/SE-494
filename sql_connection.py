@@ -180,6 +180,28 @@ class SQLConnection:
 
         return output
 
+    def collect_usl_lsl_data(self, order_number):
+
+        if isinstance(order_number, str):
+            order_number = int(order_number)
+
+        query = f"""
+         SELECT s1.USL, s1.LSL, s2.USL, s2.LSL, s3.USL, s3.LSL
+                 FROM [{self.table_70_name}].dbo.sfordfil_sql a left outer join [{self.table_cff_name}].dbo.fiber_specs b ON a.item_no = b.item_no 
+                     inner join [{self.table_70_name}].dbo.imitmidx_sql c on a.item_no = c.item_no
+                     left join [{self.table_qa_name}].dbo.{"Diameter"} s1 on s1.[Shop Floor Order Number] = a.ord_no
+                     left join [{self.table_qa_name}].dbo.{"Aplitude"} s2 on s2.[Shop Floor Order Number] = a.ord_no
+                     left join [{self.table_qa_name}].dbo.{"Frequency"} s3 on s3.[Shop Floor Order Number] = a.ord_no
+                     where a.ord_no = {order_number} """
+
+        self.query(query)
+
+        data = list(map(float, self.cursor.fetchone()))
+
+        logging.debug("Saving to database output " + str(data))
+
+        return data
+
     def insert_data(self, order_number: int, line_number: int, operator: str, diameters: list[float],
                     amplitudes: list[float], frequencies: list[float]):
         orders = self.get_filament_specs(order_number)
@@ -265,6 +287,8 @@ if __name__ == '__main__':
     sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
 
     data = sql.collect_previous_data(282353)
+
+    print(sql.collect_usl_lsl_data(282353))
 
     with open("example_data.json", "w") as f:
         json.dump(data, f)

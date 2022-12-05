@@ -36,8 +36,9 @@ class MainWindow:
         self.frequency_data = []
         self.amplitude_data = []
 
-        self.USL = 10
-        self.LSL = 0
+        self.diameter_USL, self.diameter_LSL = 0, 10
+        self.frequency_USL, self.frequency_LSL = 0, 10
+        self.amplitude_USL, self.amplitude_LSL = 0, 10
 
         self.loaded = False
 
@@ -113,11 +114,17 @@ class MainWindow:
         self.diameterTextbox = customtkinter.CTkTextbox(self.master)
         self.diameterTextbox.grid(row=7, column=0, padx=15)
 
+        self.diameter_USL_label = customtkinter.CTkLabel(self.master, text="LSL/USL")
+        self.diameter_USL_label.grid(row=8, column=0, pady=0)
+
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
 
         self.frequncyTextbox = customtkinter.CTkTextbox(self.master)
         self.frequncyTextbox.grid(row=7, column=1)
+
+        self.frequency_USL_label = customtkinter.CTkLabel(self.master, text="LSL/USL")
+        self.frequency_USL_label.grid(row=8, column=1, pady=0)
 
         ampLabel = customtkinter.CTkLabel(self.master, text="Amplitude")
         ampLabel.grid(column=2, row=6, pady=10)
@@ -125,12 +132,15 @@ class MainWindow:
         self.ampTextbox = customtkinter.CTkTextbox(self.master)
         self.ampTextbox.grid(row=7, column=2)
 
+        self.amp_USL_label = customtkinter.CTkLabel(self.master, text="LSL/USL")
+        self.amp_USL_label.grid(row=8, column=2, pady=0)
+
         # button widget
         self.vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200,
                                                  command=self.command)
         # Set Button Grid
 
-        self.vizButton.grid(column=1, row=8, pady=25)
+        self.vizButton.grid(column=1, row=9, pady=25)
         # self.sql = SQLConnection(self.config)
 
     def data_communication(self):
@@ -176,7 +186,7 @@ class MainWindow:
     def sfonValidation(self, sfonInput):
         self.loaded = False
 
-        if sfonInput.isdigit() and len(sfonInput) <= 8:
+        if sfonInput.isdigit() and len(sfonInput) <= 6:
             return True
         elif sfonInput == "":
             return True
@@ -193,11 +203,25 @@ class MainWindow:
         else:
             return False
 
+    def set_usl_lsl(self, label: customtkinter.CTkLabel, lsl, usl):
+        label.set_text(f"LSL/USL: [{lsl}, {usl}]")
+
     def sfonClicked(self):
         sfonText: str = self.sfonText.get()
-        if sfonText.isdigit() and len(sfonText) == 8:
+        if sfonText.isdigit() and len(sfonText) >= 6:
             print(sfonText)
-            self.sql.collect_previous_data(sfonText)
+            output = self.sql.collect_usl_lsl_data(sfonText)
+
+            self.diameter_USL, self.diameter_LSL, \
+                self.amplitude_USL, self.amplitude_LSL, \
+                self.frequency_USL, self.frequency_LSL = output
+
+            self.set_usl_lsl(self.diameter_USL_label, self.diameter_LSL, self.diameter_USL)
+            self.set_usl_lsl(self.frequency_USL_label, self.frequency_LSL, self.frequency_USL)
+            self.set_usl_lsl(self.amp_USL_label, self.amplitude_LSL, self.amplitude_USL)
+
+            self.refresh_tables()
+
             self.loaded = True
         else:
             self.loaded = False
@@ -219,7 +243,14 @@ class MainWindow:
             amplitude_data = self.amplitude_data[:]
 
             order_number = int(self.sfonText.get())
-            line_number = int(self.lineNumText.get())
+
+            try:
+                line_number = int(self.lineNumText.get())
+            except ValueError as e:
+                self.popup(f"Invalid line number: `{self.lineNumText.get()}`")
+                return
+
+
             opNameText = self.opNameCombo.get()
 
             fname = "operators.json"
@@ -239,6 +270,7 @@ class MainWindow:
                 }
 
             with open(fname, "w") as f:
+                load_data['operator_names'] = list(set(op_list))
                 json.dump(load_data, f)
 
             print(order_number, line_number, opNameText, diameter_data, amplitude_data, freq_data)
@@ -262,9 +294,9 @@ class MainWindow:
         self.refresh_tables()
 
     def refresh_tables(self):
-        self.spec_color(self.diameter_data, self.diameterTextbox, self.USL, self.LSL)
-        self.spec_color(self.frequency_data, self.frequncyTextbox, self.USL, self.LSL)
-        self.spec_color(self.amplitude_data, self.ampTextbox, self.USL, self.LSL)
+        self.spec_color(self.diameter_data, self.diameterTextbox, self.diameter_USL, self.diameter_LSL)
+        self.spec_color(self.frequency_data, self.frequncyTextbox, self.frequency_USL, self.frequency_LSL)
+        self.spec_color(self.amplitude_data, self.ampTextbox, self.amplitude_USL, self.amplitude_LSL)
 
 
 class EntryWithPlaceholder(Entry):
