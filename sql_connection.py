@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 
+import numpy as np
 import pyodbc
 
 from configuration import Config
@@ -229,6 +230,9 @@ class SQLConnection:
         noms = [nominal_d, nominal_a, nominal_f]
 
         for name, data, nom in zip(names, datas, noms):
+            data = np.array(data)
+            data = data[data > 0]
+
             if data is not None and len(data) > 0:
                 outputs[name] = {}
 
