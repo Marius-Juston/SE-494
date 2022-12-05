@@ -284,11 +284,11 @@ if __name__ == '__main__':
     config = Config()
 
     sql = SQLConnection(config)
-    sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
+    sql.insert_data(283193, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
 
-    data = sql.collect_previous_data(282353)
+    data = sql.collect_previous_data(283193)
 
-    print(sql.collect_usl_lsl_data(282353))
+    print(sql.collect_usl_lsl_data(283193))
 
     with open("example_data.json", "w") as f:
         json.dump(data, f)
