@@ -14,9 +14,7 @@ import pandas as pd
 from matplotlib import ticker
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from udp import SensorConnection
-# Save the operators that have been used before
-# Last user when opening up the application again is automatically set
-# Dropdown option for the operators
+
 
 class MainWindow:
     def __init__(self, master):
@@ -101,16 +99,16 @@ class MainWindow:
         self.ampTextbox = customtkinter.CTkTextbox(self.master)
         self.ampTextbox.grid(row=7, column=2)
 
+        self.sensorConfig = SensorConnection(self.config, self.data_callbak)
+        
         # button widget 
-        vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200, command=self.command)
+        self.vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200, command=self.command)
         # Set Button Grid
-        vizButton.grid(column=1, row=8, pady=25)
+        self.vizButton.grid(column=1, row=8, pady=25)
         #self.sql = SQLConnection(self.config)
 
-        self.sensorConfig = SensorConnection(self.config, self.data_callbak)
-
         #USL, LSL, Mean, std. dev, quartiles
-    def spec_color(self,list,input_textbox, USL, LSL):
+    def spec_color(self,list,input_textbox, LSL, USL):
         #add clear textbox
         input_textbox.textbox.delete("1.0","end")
 
@@ -202,9 +200,9 @@ class MainWindow:
         diameter = x[:len(x)//3]
         freq = x[len(x)//3:len(x)//3*2]
         amp = x[len(x)//3*2:]
-        self.spec_color(diameter, self.diameterTextbox, 0.5, 0.3)
-        self.spec_color(freq, self.frequncyTextbox, 0.5, 0.3)
-        self.spec_color(amp, self.ampTextbox, 0.5, 0.3)
+        self.spec_color(diameter, self.diameterTextbox, 0.3, 0.85)
+        self.spec_color(freq, self.frequncyTextbox, 0.3, 0.85)
+        self.spec_color(amp, self.ampTextbox, 0.3, 0.85)
 
 
 class EntryWithPlaceholder(Entry):
