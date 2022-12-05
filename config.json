@@ -1,12 +1,26 @@
 {
   "SQL_SERVER_NAME": "MARIUS-LAPTOP\\SQLEXPRESS",
+  "SQL_DRIVER":"SQL Server Native Client 11.0",
+  "SQL_SERVER_NAME2": "PROSERV",
+  "SQL_DRIVER2": "SQL Server",
   "LOG_DIRECTORY": ".\\logs\\",
   "PRODUCT_TOL": {
     "800": 0.03,
     "810": 0.03,
     "default": 0.07
   },
-  "SENSOR_IP": "127.0.0.1",
-  "SENSOR_PORT": 20001,
-  "BUFFER_SIZE": 496
+  "SENSOR_IP": "169.254.127.234",
+  "SENSOR_PORT": 8600,
+  "BUFFER_SIZE": 496,
+  "DATA_INDICES": {
+    "diameter": [0,1,2,3,4,5,6,7,8, 9],
+    "frequency": [10,11,12,13,14,15,16,17,18,19],
+    "amplitude": [20,21,22,23,24,25,26, 27, 28, 29]
+  },
+  "DATABASE_MAPPING":
+  {
+    "70": "70_UI",
+    "CFF": "CFF_UI",
+    "QA" : "QA_UI"
+  }
 }

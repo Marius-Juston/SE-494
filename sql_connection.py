@@ -15,7 +15,7 @@ class SQLConnection:
         """
         @param config:  Retrieved using SELECT @@SERVERNAME query
         """
-        driver_name = 'SQL Server Native Client 11.0'
+        driver_name = config.SQL_DRIVER
 
         logging.debug("Available drivers: " + str(pyodbc.drivers()))
 
@@ -29,6 +29,10 @@ class SQLConnection:
         logging.info("Successfully connected to database")
 
         self.cursor: pyodbc.Cursor = connection.cursor()
+
+        self.table_70_name = self.config.DATABASE_MAPPING['70']
+        self.table_cff_name = self.config.DATABASE_MAPPING['CFF']
+        self.table_qa_name = self.config.DATABASE_MAPPING['QA']
 
         self.get_filament_specs(0)
 
@@ -44,8 +48,8 @@ class SQLConnection:
         logging.info(f"Getting filament specs for order number: '{order_number}'")
 
         query = f"""SELECT a.ord_no, a.item_no, a.item_desc_1, a.item_desc_2, b.diameter, b.amp, b.freq, c.prod_cat 
-                        FROM [70_UI].dbo.sfordfil_sql a left outer join [CFF_UI].dbo.fiber_specs b ON a.item_no = b.item_no 
-                            inner join [70_UI].dbo.imitmidx_sql c on a.item_no = c.item_no
+                        FROM [{self.table_70_name}].dbo.sfordfil_sql a left outer join [{self.table_cff_name}].dbo.fiber_specs b ON a.item_no = b.item_no 
+                            inner join [{self.table_70_name}].dbo.imitmidx_sql c on a.item_no = c.item_no
                             where a.ord_no = {order_number}"""
 
         self.query(query)
@@ -53,7 +57,7 @@ class SQLConnection:
         return self.cursor.fetchone()
 
     def collect_sample_number(self, order_number: int, database: str):
-        query = f"""SELECT TOP 1 [Sample Number] FROM [QA_UI].[dbo].[{database}]  
+        query = f"""SELECT TOP 1 [Sample Number] FROM [{self.table_qa_name}].[dbo].[{database}]  
         where [Shop Floor Order Number]={order_number} order by  [Sample Number] desc"""
 
         self.query(query)
@@ -61,7 +65,7 @@ class SQLConnection:
         return self.cursor.fetchone()
 
     def get_key(self, database):
-        query = f'SELECT TOP 1 * FROM [QA_UI].[dbo].[{database}] order by [key] desc'
+        query = f'SELECT TOP 1 * FROM [{self.table_qa_name}].[dbo].[{database}] order by [key] desc'
 
         self.query(query)
 
@@ -115,7 +119,7 @@ class SQLConnection:
 
         out_values = [f"'{d}'" if isinstance(d, str) else str(d) for d in out_values]
 
-        query = f'INSERT INTO [QA_UI].[dbo].[{database}] ({",".join(fields)}) VALUES ({",".join(out_values)})'
+        query = f'INSERT INTO [{self.table_qa_name}].[dbo].[{database}] ({",".join(fields)}) VALUES ({",".join(out_values)})'
 
         self.query(query)
         self.cursor.commit()
@@ -138,9 +142,9 @@ class SQLConnection:
 
             query = f"""
             SELECT TOP 100 d.Date, d.[Sample Number], {nom}, d.AVG, d.USL, d.LSL
-                    FROM [70_UI].dbo.sfordfil_sql a left outer join [CFF_UI].dbo.fiber_specs b ON a.item_no = b.item_no 
-                        inner join [70_UI].dbo.imitmidx_sql c on a.item_no = c.item_no
-                        left join [QA_UI].dbo.{d} d on d.[Shop Floor Order Number] = a.ord_no
+                    FROM [{self.table_70_name}].dbo.sfordfil_sql a left outer join [{self.table_cff_name}].dbo.fiber_specs b ON a.item_no = b.item_no 
+                        inner join [{self.table_70_name}].dbo.imitmidx_sql c on a.item_no = c.item_no
+                        left join [{self.table_qa_name}].dbo.{d} d on d.[Shop Floor Order Number] = a.ord_no
                         where a.ord_no = {order_number}            
                         order by d.Date desc, d.[Sample Number] desc"""
 
