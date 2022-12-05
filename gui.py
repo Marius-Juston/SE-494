@@ -209,20 +209,24 @@ class MainWindow:
     def sfonClicked(self):
         sfonText: str = self.sfonText.get()
         if sfonText.isdigit() and len(sfonText) >= 6:
-            print(sfonText)
             output = self.sql.collect_usl_lsl_data(sfonText)
 
-            self.diameter_USL, self.diameter_LSL, \
-                self.amplitude_USL, self.amplitude_LSL, \
-                self.frequency_USL, self.frequency_LSL = output
+            if output is not None:
+                self.diameter_USL, self.diameter_LSL, \
+                    self.amplitude_USL, self.amplitude_LSL, \
+                    self.frequency_USL, self.frequency_LSL = output
 
-            self.set_usl_lsl(self.diameter_USL_label, self.diameter_LSL, self.diameter_USL)
-            self.set_usl_lsl(self.frequency_USL_label, self.frequency_LSL, self.frequency_USL)
-            self.set_usl_lsl(self.amp_USL_label, self.amplitude_LSL, self.amplitude_USL)
+                self.set_usl_lsl(self.diameter_USL_label, self.diameter_LSL, self.diameter_USL)
+                self.set_usl_lsl(self.frequency_USL_label, self.frequency_LSL, self.frequency_USL)
+                self.set_usl_lsl(self.amp_USL_label, self.amplitude_LSL, self.amplitude_USL)
 
-            self.refresh_tables()
+                self.refresh_tables()
 
-            self.loaded = True
+                self.loaded = True
+            else:
+                self.popup("Order number " + sfonText + " is invalid")
+
+                self.loaded = False
         else:
             self.loaded = False
             print("error")

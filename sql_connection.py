@@ -197,9 +197,14 @@ class SQLConnection:
 
         self.query(query)
 
-        data = list(map(float, self.cursor.fetchone()))
+        data = self.cursor.fetchone()
 
-        logging.debug("Saving to database output " + str(data))
+        if data is not None:
+            data = list(map(float, data))
+
+            logging.debug("Saving to database output " + str(data))
+        else:
+            logging.error("No LSL or USL for the given order number: " + str(order_number))
 
         return data
 
