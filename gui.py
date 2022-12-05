@@ -108,7 +108,7 @@ class MainWindow:
         #self.sql = SQLConnection(self.config)
 
         #USL, LSL, Mean, std. dev, quartiles
-    def spec_color(self,list,input_textbox, USL, LSL):
+    def spec_color(self,list,input_textbox, LSL, USL):
         #add clear textbox
         input_textbox.textbox.delete("1.0","end")
 
@@ -200,9 +200,9 @@ class MainWindow:
         diameter = x[:len(x)//3]
         freq = x[len(x)//3:len(x)//3*2]
         amp = x[len(x)//3*2:]
-        self.spec_color(diameter, self.diameterTextbox, 0.5, 0.3)
-        self.spec_color(freq, self.frequncyTextbox, 0.5, 0.3)
-        self.spec_color(amp, self.ampTextbox, 0.5, 0.3)
+        self.spec_color(diameter, self.diameterTextbox, 0.3, 0.85)
+        self.spec_color(freq, self.frequncyTextbox, 0.3, 0.85)
+        self.spec_color(amp, self.ampTextbox, 0.3, 0.85)
 
 
 class EntryWithPlaceholder(Entry):
