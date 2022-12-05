@@ -250,6 +250,7 @@ class MainWindow:
 
     def data_callbak(self, data):
         x_temp = np.array(list(map(float, data.split(","))))
+        x_temp[x_temp == -9999.999] = 0.0
 
         x = np.zeros(self.max_data_values)
         x[:x_temp.shape[0]] = x_temp
