@@ -67,10 +67,10 @@ class SQLConnection:
 
         return self.cursor.fetchone()
 
-    def insert_to_table(self, database: str, values):
+    def insert_to_table(self, database: str, values, max_samples_num):
         logging.debug(f"Inserting to table {database}: {values}")
 
-        total_samples = [f"Sample{i + 1}" for i in range(len(values["data"]['samp']))]
+        total_samples = [f"Sample{i + 1}" for i in range(max_samples_num)]
 
         fields = [
             "key",
@@ -111,6 +111,7 @@ class SQLConnection:
             values['data']['samp_num'],
         ]
         out_values.extend(values['data']['samp'])
+        out_values.extend([0.0 for _ in range(max_samples_num - len(values['data']['samp']))])
 
         out_values = [f"'{d}'" if isinstance(d, str) else str(d) for d in out_values]
 
@@ -233,7 +234,7 @@ class SQLConnection:
                 for i in range(0, len(data), max_data):
                     data_cut = data[i:i + max_data]
 
-                    max_data = max(data_cut)
+                    max_data_v = max(data_cut)
                     min_data = min(data_cut)
                     average_data = sum(data_cut) / len(data_cut)
 
@@ -242,22 +243,22 @@ class SQLConnection:
 
                     outputs[name]["data"] = {
                         'min': min_data,
-                        'max': max_data,
+                        'max': max_data_v,
                         'avg': average_data,
                         'samp': data_cut,
                         'samp_num': counter,
-                        'range': max_data - min_data,
+                        'range': max_data_v - min_data,
                         'key': key
                     }
 
-                    self.insert_to_table(name, outputs[name])
+                    self.insert_to_table(name, outputs[name], max_data)
 
 
 if __name__ == '__main__':
     config = Config()
 
     sql = SQLConnection(config)
-    # sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
+    sql.insert_data(282618, 1, "John", [i for i in range(22)], [i for i in range(22)], [i for i in range(22)])
 
     data = sql.collect_previous_data(282353)
 
