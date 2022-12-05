@@ -22,5 +22,6 @@
     "70": "70_UI",
     "CFF": "CFF_UI",
     "QA" : "QA_UI"
-  }
+  },
+  "GRAPH_HISTORY_HOURS": 5
 }

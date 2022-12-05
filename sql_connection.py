@@ -164,7 +164,8 @@ class SQLConnection:
 
                 for out in outs:
                     date: datetime = out[0]
-                    x.append(date.isoformat())
+                    # x.append(date.isoformat())
+                    x.append(date)
                     y.append(float(out[3]))
 
                 data = {

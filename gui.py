@@ -8,6 +8,7 @@ from tkinter import *
 from tkinter import messagebox
 
 import customtkinter
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 # Save the operators that have been used before
 # Last user when opening up the application again is automatically set
@@ -180,7 +181,7 @@ class MainWindow:
                 textbox.insert(END, str(i) + '\n', "red")
 
     def command(self):
-        self.app = Graph(self.master)
+        self.app = Graph(self.master, self.sql, self.sfonText.get(), self.config.GRAPH_HISTORY_HOURS)
 
     # function to validate that sfon is a 8 digit number
     def sfonValidation(self, sfonInput):
@@ -253,7 +254,6 @@ class MainWindow:
             except ValueError as e:
                 self.popup(f"Invalid line number: `{self.lineNumText.get()}`")
                 return
-
 
             opNameText = self.opNameCombo.get()
 
@@ -331,117 +331,77 @@ class EntryWithPlaceholder(Entry):
 
 
 class Graph():
-    def __init__(self, master):
+    def __init__(self, master, sql_connection: SQLConnection, order_number, time_interval=5):
         self.master = master
         self.frame = Frame(master)
 
-        diameter_dates = []
-        diameter_avgs = []
-        freq_dates = []
-        freq_avgs = []
-        amp_dates = []
-        amp_avgs = []
+        load_data = sql_connection.collect_previous_data(order_number)
 
-        with open("example_data.json") as f:
-            load_data = json.load(f)
-            diameter_USL = load_data["Diameter"]["ULS"]
-            diameter_LSL = load_data["Diameter"]["LSL"]
-            diameter_NOM = load_data["Diameter"]["NOM"]
-            diameter_dates = load_data["Diameter"]["dates"]
-            diameter_avgs = load_data["Diameter"]["avgs"]
+        print(load_data)
 
-            freq_USL = load_data["Frequency"]["ULS"]
-            freq_LSL = load_data["Frequency"]["LSL"]
-            freq_NOM = load_data["Frequency"]["NOM"]
-            freq_dates = load_data["Frequency"]["dates"]
-            freq_avgs = load_data["Frequency"]["avgs"]
-
-            amp_USL = load_data["Aplitude"]["ULS"]
-            amp_LSL = load_data["Aplitude"]["LSL"]
-            amp_NOM = load_data["Aplitude"]["NOM"]
-            amp_dates = load_data["Aplitude"]["dates"]
-            amp_avgs = load_data["Aplitude"]["avgs"]
-
-        all_diameter_dates = []
-        all_freq_dates = []
-        all_amp_dates = []
-
-        for key in diameter_dates:
-            all_diameter_dates.append(key.split('T')[0])
-
-        for key in freq_dates:
-            all_freq_dates.append(key.split('T')[0])
-
-        for key in amp_dates:
-            all_amp_dates.append(key.split('T')[0])
-
-        diameter_df = zip(all_diameter_dates, diameter_avgs)
-        diameter_df_new = pd.DataFrame(diameter_df, columns=['date', 'avg'])
-        diameter_df_new['num'] = diameter_df_new.reset_index().index + 1
-        diameter_df_new['USL'] = diameter_USL
-        diameter_df_new['LSL'] = diameter_LSL
-        diameter_df_new['NOM'] = diameter_NOM
-        diameter_df_new = diameter_df_new.head(15)
-        # print (diameter_df_new)
-
-        freq_df = zip(all_freq_dates, freq_avgs)
-        freq_df_new = pd.DataFrame(freq_df, columns=['date', 'avg'])
-        freq_df_new['num'] = freq_df_new.reset_index().index + 1
-        freq_df_new['USL'] = freq_USL
-        freq_df_new['LSL'] = freq_LSL
-        freq_df_new['NOM'] = freq_NOM
-        freq_df_new = freq_df_new.head(15)
-        # print (freq_df_new)
-
-        amp_df = zip(all_amp_dates, amp_avgs)
-        amp_df_new = pd.DataFrame(amp_df, columns=['date', 'avg'])
-        amp_df_new['num'] = amp_df_new.reset_index().index + 1
-        amp_df_new['USL'] = amp_USL
-        amp_df_new['LSL'] = amp_LSL
-        amp_df_new['NOM'] = amp_NOM
-        amp_df_new = amp_df_new.head(15)
-        # print (amp_df_new)
+        entry_names = ["Diameter", "Frequency", "Aplitude"]
+        plot_names = ["Diameter", "Frequency", "Amplitude"]
 
         fig, axs = plt.subplots(3, figsize=(9, 7))
 
-        # For diameter
-        d_xpoints = diameter_df_new['num'].tolist()
-        d_ypoints = diameter_df_new['avg'].tolist()
-        axs[0].axhline(y=diameter_USL, color='r', linestyle='-')
-        axs[0].axhline(y=diameter_LSL, color='r', linestyle='-')
-        axs[0].set_xlabel("Data points")
-        axs[0].set_ylabel("Diameter measurements")
-        axs[0].plot(d_xpoints, d_ypoints)
-        axs[0].set_xticks(d_xpoints)
-        dy = ticker.MaxNLocator(4)
-        axs[0].yaxis.set_major_locator(dy)
-        axs[0].set_title("Diameter")
+        for i in range(len(entry_names)):
+            entry = entry_names[i]
+            plot_name = plot_names[i]
 
-        # For frequency
-        f_xpoints = freq_df_new['num'].tolist()
-        f_ypoints = freq_df_new['avg'].tolist()
-        axs[1].axhline(y=freq_USL, color='r', linestyle='-')
-        axs[1].axhline(y=freq_LSL, color='r', linestyle='-')
-        axs[1].set_xlabel("Data points")
-        axs[1].set_ylabel("Frequency measurements")
-        axs[1].plot(f_xpoints, f_ypoints)
-        axs[1].set_xticks(f_xpoints)
-        fy = ticker.MaxNLocator(4)
-        axs[1].yaxis.set_major_locator(fy)
-        axs[1].set_title("Frequency")
+            if entry in load_data:
+                diameter_USL = load_data[entry]["ULS"]
+                diameter_LSL = load_data[entry]["LSL"]
+                diameter_NOM = load_data[entry]["NOM"]
+                diameter_dates = load_data[entry]["dates"]
+                diameter_avgs = load_data[entry]["avgs"]
 
-        # For amplitude
-        a_xpoints = amp_df_new['num'].tolist()
-        a_ypoints = amp_df_new['avg'].tolist()
-        axs[2].axhline(y=amp_USL, color='r', linestyle='-')
-        axs[2].axhline(y=amp_LSL, color='r', linestyle='-')
-        axs[2].set_xlabel("Data points")
-        axs[2].set_ylabel("Amplitude measurements")
-        axs[2].plot(a_xpoints, a_ypoints)
-        axs[2].set_xticks(a_xpoints)
-        ay = ticker.MaxNLocator(4)
-        axs[2].yaxis.set_major_locator(ay)
-        axs[2].set_title("Amplitude")
+                all_diameter_dates = []
+
+                for key in diameter_dates:
+                    all_diameter_dates.append(key)
+
+                diameter_df = zip(all_diameter_dates, diameter_avgs)
+                diameter_df_new = pd.DataFrame(diameter_df, columns=['date', 'avg'])
+                diameter_df_new['num'] = all_diameter_dates
+                diameter_df_new['USL'] = diameter_USL
+                diameter_df_new['LSL'] = diameter_LSL
+                diameter_df_new['NOM'] = diameter_NOM
+                diameter_df_new = diameter_df_new.head(15)
+
+                end_time = diameter_df_new.head(1)['date'][0]
+                start_time = end_time - pd.Timedelta(hours=time_interval)
+
+                diameter_df_new = diameter_df_new.query("date >= @start_time and date <= @end_time")
+
+                diameter_df_new.sort_values("date")
+
+                print(diameter_df_new)
+
+                # For diameter
+                d_xpoints = diameter_df_new['num'].tolist()
+                d_ypoints = diameter_df_new['avg'].tolist()
+                axs[i].axhline(y=diameter_USL, color='r', linestyle='-')
+                axs[i].axhline(y=diameter_LSL, color='r', linestyle='-')
+                axs[i].plot(d_xpoints, d_ypoints)
+                axs[i].set_xticks(d_xpoints)
+
+            axs[i].set_xlabel("Data points")
+            axs[i].set_ylabel(f"{plot_name} measurements")
+            dy = ticker.MaxNLocator(4)
+
+            hour_locator = mdates.HourLocator(interval=1)
+            quarter_hour_locator = mdates.MinuteLocator(interval=15)
+
+            hour_formatter = mdates.DateFormatter("%d %H:%M:%S")
+
+            # axs[i].xaxis.set_minor_locator(quarter_hour_locator)
+            # axs[i].xaxis.set_major_locator(hour_locator)  # Locator for major axis only.
+            axs[i].xaxis.set_major_formatter(hour_formatter)
+
+            axs[i].yaxis.set_major_locator(dy)
+            axs[i].set_title(plot_name)
+
+        fig.autofmt_xdate()
 
         # Combining all the operations and display
         plt.tight_layout()
