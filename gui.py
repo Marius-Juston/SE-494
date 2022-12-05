@@ -1,25 +1,52 @@
 # Importing Libraries 
 import json
-import matplotlib.pyplot as plt
-import pandas as pd 
+import logging
 import os
+import time
+from threading import Thread
 from tkinter import *
 from tkinter import messagebox
-from tkinter import ttk
+
 import customtkinter
+import matplotlib.pyplot as plt
+# Save the operators that have been used before
+# Last user when opening up the application again is automatically set
+# Dropdown option for the operators
+import numpy as np
+import pandas as pd
+from matplotlib import ticker
+
 from configuration import Config
 from sql_connection import SQLConnection
-import matplotlib.pyplot as plt
-import pandas as pd  
-from matplotlib import ticker
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from udp import SensorConnection
 
 
 class MainWindow:
     def __init__(self, master):
         self.config = Config()
-    
+
+        self.data_indices: dict = self.config.DATA_INDICES
+
+        self.max_data_values = 0
+
+        for d in self.data_indices.values():
+            self.max_data_values = max(self.max_data_values, max(d) + 1)
+
+        self.diameter_data = []
+        self.frequency_data = []
+        self.amplitude_data = []
+
+        self.USL = 10
+        self.LSL = 0
+
+        self.loaded = False
+
+        self.sql = SQLConnection(self.config)
+        self.sensor_connection = None
+
+        self.sensor_connection_thread = Thread(target=self.data_communication)
+        self.sensor_connection_thread.start()
+
         self.master = master
         inputLabel = customtkinter.CTkLabel(self.master, text="Input information", text_font=(None, 18),
                                             text_color="#4f95c0")
@@ -27,20 +54,21 @@ class MainWindow:
 
         opNameLabel = customtkinter.CTkLabel(self.master, text="Enter operator name: ")
         opNameLabel.grid(column=0, row=1, pady=10)
-        
-        #get existing operators
+
+        # get existing operators
         with open('operators.json', 'r') as f:
             self.op_data = json.load(f)
         # adding Entry Field
         self.opNameCombo = customtkinter.CTkComboBox(master=self.master,
-                                     values=self.op_data['operator_names'], 
-                                     width = 195, fg_color="#1e1e1e", border_color = "#323232", text_color="white")
+                                                     values=self.op_data['operator_names'],
+                                                     width=195, fg_color="#1e1e1e", border_color="#323232",
+                                                     text_color="white")
         self.opNameCombo.set(self.op_data['last_operator'])
         self.opNameCombo.grid(column=1, row=1, pady=10)
 
-        #old entry for operator name
-        #self.opNameText = EntryWithPlaceholder(self.master, "Enter your name!")
-        #self.opNameText.bind('<Return>', (lambda _: self.op_callback(self.opNameText)))
+        # old entry for operator name
+        # self.opNameText = EntryWithPlaceholder(self.master, "Enter your name!")
+        # self.opNameText.bind('<Return>', (lambda _: self.op_callback(self.opNameText)))
 
         sfonLabel = customtkinter.CTkLabel(self.master, text="Enter shop floor order number: ")
         sfonLabel.grid(column=0, row=2, pady=10, padx=5)
@@ -57,7 +85,6 @@ class MainWindow:
                                              command=self.sfonClicked)
         # Set Button Grid
         sfonButton.grid(column=2, row=2, pady=10)
-
 
         lineNumLabel = customtkinter.CTkLabel(self.master, text="Enter line number: ")
         lineNumLabel.grid(column=0, row=3, pady=10)
@@ -83,10 +110,9 @@ class MainWindow:
         diameterLabel = customtkinter.CTkLabel(self.master, text="Diameter")
         diameterLabel.grid(column=0, row=6, pady=10)
 
-        sample_data = list(range(1,11))
         self.diameterTextbox = customtkinter.CTkTextbox(self.master)
         self.diameterTextbox.grid(row=7, column=0, padx=15)
-        
+
         frequencyLabel = customtkinter.CTkLabel(self.master, text="Frequency")
         frequencyLabel.grid(column=1, row=6, pady=10)
 
@@ -99,42 +125,57 @@ class MainWindow:
         self.ampTextbox = customtkinter.CTkTextbox(self.master)
         self.ampTextbox.grid(row=7, column=2)
 
-        self.sensorConfig = SensorConnection(self.config, self.data_callbak)
-        
-        # button widget 
-        self.vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200, command=self.command)
+        # button widget
+        self.vizButton = customtkinter.CTkButton(self.master, text="Data visualization", width=200,
+                                                 command=self.command)
         # Set Button Grid
-        self.vizButton.grid(column=1, row=8, pady=25)
-        #self.sql = SQLConnection(self.config)
 
-        #USL, LSL, Mean, std. dev, quartiles
-    def spec_color(self,list,input_textbox, LSL, USL):
-        #add clear textbox
-        input_textbox.textbox.delete("1.0","end")
+        self.vizButton.grid(column=1, row=8, pady=25)
+        # self.sql = SQLConnection(self.config)
+
+    def data_communication(self):
+        connected = False
+
+        while not connected:
+            try:
+                self.sensor_connection = SensorConnection(self.config, self.data_callbak)
+                logging.info("Sensor connected!")
+                connected = True
+            except OSError as e:
+                logging.error("Unable to connect to the Keyence sensor: " + e.strerror)
+                logging.error("Retrying in 5 seconds")
+                time.sleep(5)
+                connected = False
+
+    # USL, LSL, Mean, std. dev, quartiles
+    def spec_color(self, input_data, input_textbox, LSL, USL):
+        # add clear textbox
+        input_textbox.textbox.delete("1.0", "end")
 
         input_textbox.tag_config("red", foreground="red")
         input_textbox.tag_config("green", foreground="green")
-        for i in list:
-            if LSL<=i<=USL:
+        for i in input_data:
+            if LSL <= i <= USL:
                 input_textbox.insert(END, str(i) + '\n', "green")
             else:
                 input_textbox.insert(END, str(i) + '\n', "red")
 
-    def test_spec_color(self,list,textbox):
+    def test_spec_color(self, list, textbox):
         textbox.tag_config("red", foreground="red")
         textbox.tag_config("green", foreground="green")
         for i in list:
-            if i%2 == 0:
+            if i % 2 == 0:
                 textbox.insert(END, str(i) + '\n', "green")
             else:
                 textbox.insert(END, str(i) + '\n', "red")
 
     def command(self):
         self.app = Graph(self.master)
-       
 
     # function to validate that sfon is a 8 digit number
     def sfonValidation(self, sfonInput):
+        self.loaded = False
+
         if sfonInput.isdigit() and len(sfonInput) <= 8:
             return True
         elif sfonInput == "":
@@ -142,7 +183,8 @@ class MainWindow:
         else:
             return False
 
-    # function to validate that line number is a 1 digit number
+        # function to validate that line number is a 1 digit number
+
     def lineNumValidation(self, sfonInput):
         if sfonInput.isdigit() and len(sfonInput) <= 1:
             return True
@@ -150,59 +192,78 @@ class MainWindow:
             return True
         else:
             return False
-        
+
     def sfonClicked(self):
-        sfonText = self.sfonText.get()
+        sfonText: str = self.sfonText.get()
         if sfonText.isdigit() and len(sfonText) == 8:
-            print(sfonText.get())
-            #self.sql.collect_previous_data(sfonText.get())
+            print(sfonText)
+            self.sql.collect_previous_data(sfonText)
+            self.loaded = True
         else:
+            self.loaded = False
             print("error")
             self.popup("Invalid shop floor order number")
 
     def popup(self, msg=""):
         messagebox.showerror(title=None, message=msg)
 
-    # function to display user text when
-    # button is clicked
+        # function to display user text when
+        # button is clicked
+
     def clicked(self):
-        sfonText = self.sfonText.get()
-        lineNumText = self.lineNumText.get(),
-        opNameText = self.opNameCombo.get()
-
-        fname = "operators.json"
-        op_list = []
-        if os.path.exists(fname):
-            with open(fname) as f:
-                load_data = json.load(f)
-                op_list = load_data["operator_names"]
-                op_list.append(opNameText)
-                load_data["last_operator"] = opNameText
-                load_data["operator_names"] = op_list
+        if not self.loaded:
+            self.popup("Please press the Load data button before saving information")
         else:
-            op_list.append(opNameText)
-            load_data = {
-                "last_operator": opNameText,
-                "operator_names": op_list,
-            }
+            diameter_data = self.diameter_data[:]
+            freq_data = self.frequency_data[:]
+            amplitude_data = self.amplitude_data[:]
 
-        with open(fname, "w") as f:
-            json.dump(load_data, f)
+            order_number = int(self.sfonText.get())
+            line_number = int(self.lineNumText.get())
+            opNameText = self.opNameCombo.get()
 
-        print(int(sfonText), int(lineNumText), opNameText)
-        # self.sql.insert_data(int(sfonText), int(lineNumText), opNameText,
-        # [i for i in range(22)],
-        # [i for i in range(22)],
-        # [i for i in range(22)])
+            fname = "operators.json"
+            op_list = []
+            if os.path.exists(fname):
+                with open(fname) as f:
+                    load_data = json.load(f)
+                    op_list = load_data["operator_names"]
+                    op_list.append(opNameText)
+                    load_data["last_operator"] = opNameText
+                    load_data["operator_names"] = op_list
+            else:
+                op_list.append(opNameText)
+                load_data = {
+                    "last_operator": opNameText,
+                    "operator_names": op_list,
+                }
 
-    def data_callbak(self,data):
-        x = list(map(float, data.split(",")))
-        diameter = x[:len(x)//3]
-        freq = x[len(x)//3:len(x)//3*2]
-        amp = x[len(x)//3*2:]
-        self.spec_color(diameter, self.diameterTextbox, 0.3, 0.85)
-        self.spec_color(freq, self.frequncyTextbox, 0.3, 0.85)
-        self.spec_color(amp, self.ampTextbox, 0.3, 0.85)
+            with open(fname, "w") as f:
+                json.dump(load_data, f)
+
+            print(order_number, line_number, opNameText, diameter_data, amplitude_data, freq_data)
+
+            self.sql.insert_data(order_number, line_number, opNameText,
+                                 diameter_data,
+                                 amplitude_data,
+                                 freq_data)
+
+    def data_callbak(self, data):
+        x_temp = np.array(list(map(float, data.split(","))))
+
+        x = np.zeros(self.max_data_values)
+        x[:x_temp.shape[0]] = x_temp
+
+        self.diameter_data = x[self.data_indices['diameter']]
+        self.frequency_data = x[self.data_indices['frequency']]
+        self.amplitude_data = x[self.data_indices['amplitude']]
+
+        self.refresh_tables()
+
+    def refresh_tables(self):
+        self.spec_color(self.diameter_data, self.diameterTextbox, self.USL, self.LSL)
+        self.spec_color(self.frequency_data, self.frequncyTextbox, self.USL, self.LSL)
+        self.spec_color(self.amplitude_data, self.ampTextbox, self.USL, self.LSL)
 
 
 class EntryWithPlaceholder(Entry):
@@ -230,6 +291,7 @@ class EntryWithPlaceholder(Entry):
     def foc_out(self, *args):
         if not self.get():
             self.put_placeholder()
+
 
 class Graph():
     def __init__(self, master):
@@ -263,7 +325,6 @@ class Graph():
             amp_dates = load_data["Aplitude"]["dates"]
             amp_avgs = load_data["Aplitude"]["avgs"]
 
-
         all_diameter_dates = []
         all_freq_dates = []
         all_amp_dates = []
@@ -278,31 +339,31 @@ class Graph():
             all_amp_dates.append(key.split('T')[0])
 
         diameter_df = zip(all_diameter_dates, diameter_avgs)
-        diameter_df_new = pd.DataFrame(diameter_df, columns=('date', 'avg'))
+        diameter_df_new = pd.DataFrame(diameter_df, columns=['date', 'avg'])
         diameter_df_new['num'] = diameter_df_new.reset_index().index + 1
-        diameter_df_new['USL']=diameter_USL
-        diameter_df_new['LSL']=diameter_LSL
-        diameter_df_new['NOM']=diameter_NOM
+        diameter_df_new['USL'] = diameter_USL
+        diameter_df_new['LSL'] = diameter_LSL
+        diameter_df_new['NOM'] = diameter_NOM
         diameter_df_new = diameter_df_new.head(15)
-        #print (diameter_df_new)
+        # print (diameter_df_new)
 
         freq_df = zip(all_freq_dates, freq_avgs)
-        freq_df_new = pd.DataFrame(freq_df, columns=('date', 'avg'))
+        freq_df_new = pd.DataFrame(freq_df, columns=['date', 'avg'])
         freq_df_new['num'] = freq_df_new.reset_index().index + 1
-        freq_df_new['USL']=freq_USL
-        freq_df_new['LSL']=freq_LSL
-        freq_df_new['NOM']=freq_NOM
+        freq_df_new['USL'] = freq_USL
+        freq_df_new['LSL'] = freq_LSL
+        freq_df_new['NOM'] = freq_NOM
         freq_df_new = freq_df_new.head(15)
-        #print (freq_df_new)
+        # print (freq_df_new)
 
         amp_df = zip(all_amp_dates, amp_avgs)
-        amp_df_new = pd.DataFrame(amp_df, columns=('date', 'avg'))
+        amp_df_new = pd.DataFrame(amp_df, columns=['date', 'avg'])
         amp_df_new['num'] = amp_df_new.reset_index().index + 1
-        amp_df_new['USL']=amp_USL
-        amp_df_new['LSL']=amp_LSL
-        amp_df_new['NOM']=amp_NOM
+        amp_df_new['USL'] = amp_USL
+        amp_df_new['LSL'] = amp_LSL
+        amp_df_new['NOM'] = amp_NOM
         amp_df_new = amp_df_new.head(15)
-        #print (amp_df_new)
+        # print (amp_df_new)
 
         fig, axs = plt.subplots(3, figsize=(9, 7))
 
@@ -355,12 +416,10 @@ def main():
     root = customtkinter.CTk()
     root.title("User Interface")
     # Setting Widow width and Height 
-    root.geometry("820x700")
+    root.geometry("960x700")
     app = MainWindow(root)
     root.mainloop()
 
 
 if __name__ == '__main__':
     main()
-
-
