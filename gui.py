@@ -284,6 +284,8 @@ class MainWindow:
                                  amplitude_data,
                                  freq_data)
 
+            messagebox.showinfo(title=None, message="Inputted data to database")
+
     def data_callbak(self, data):
         x_temp = np.array(list(map(float, data.split(","))))
         x_temp[x_temp == -9999.999] = 0.0
